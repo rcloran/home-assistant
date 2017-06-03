@@ -221,6 +221,8 @@ class Entity(entity.Entity):
     """A base class for ZHA entities."""
 
     _domain = None  # Must be overriden by subclasses
+    _in_listeners = None
+    _out_listeners = None  # Set for listeners other than self
 
     def __init__(self, endpoint, in_clusters, out_clusters, manufacturer,
                  model, **kwargs):
@@ -247,10 +249,14 @@ class Entity(entity.Entity):
                 ieeetail,
                 endpoint.endpoint_id,
             )
-        for cluster in in_clusters.values():
-            cluster.add_listener(self)
-        for cluster in out_clusters.values():
-            cluster.add_listener(self)
+        if self._in_listeners is None:
+            self._in_listeners = {c: self for c in in_clusters.keys()}
+        for cluster_id, listener in self._in_listeners.items():
+            in_clusters[cluster_id].add_listener(listener)
+        if self._out_listeners is None:
+            self._out_listeners = {c: self for c in out_clusters.keys()}
+        for cluster_id, listener in self._out_listeners.items():
+            out_clusters[cluster_id].add_listener(listener)
         self._endpoint = endpoint
         self._in_clusters = in_clusters
         self._out_clusters = out_clusters
@@ -278,6 +284,7 @@ def _discover_endpoint_info(endpoint):
         'model': None,
     }
     if 0 not in endpoint.in_clusters:
+        _LOGGER.debug(">>>>>>>>>>>> A")
         return extra_info
 
     @asyncio.coroutine
@@ -286,6 +293,8 @@ def _discover_endpoint_info(endpoint):
             attributes,
             allow_cache=True,
         )
+        _LOGGER.debug(">>>>>>>>>>>> B")
+        _LOGGER.debug(">>>>>>>>>>>> %s", result)
         extra_info.update(result)
 
     yield from read(['manufacturer', 'model'])
@@ -295,13 +304,16 @@ def _discover_endpoint_info(endpoint):
         yield from read(['model'])
 
     for key, value in extra_info.items():
+        _LOGGER.debug(">>>>>>>>>>>> C")
         if isinstance(value, bytes):
+            _LOGGER.debug(">>>>>>>>>>>> D")
             try:
                 extra_info[key] = value.decode('ascii').strip()
             except UnicodeDecodeError:
                 # Unsure what the best behaviour here is. Unset the key?
                 pass
 
+    _LOGGER.debug(">>>>>>>>> Returning %s", extra_info)
     return extra_info
 
 
