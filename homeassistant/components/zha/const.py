@@ -27,6 +27,7 @@ def populate_data():
         zha.DeviceType.ON_OFF_LIGHT_SWITCH: 'binary_sensor',
         zha.DeviceType.DIMMER_SWITCH: 'binary_sensor',
         zha.DeviceType.COLOR_DIMMER_SWITCH: 'binary_sensor',
+        zha.DeviceType.OCCUPANCY_SENSOR: 'binary_sensor',
     }
     DEVICE_CLASS[zll.PROFILE_ID] = {
         zll.DeviceType.ON_OFF_LIGHT: 'light',
@@ -45,6 +46,7 @@ def populate_data():
 
     SINGLE_INPUT_CLUSTER_DEVICE_CLASS.update({
         zcl.clusters.general.OnOff: 'switch',
+        zcl.clusters.measurement.OccupancySensing: 'binary_sensor',
         zcl.clusters.measurement.RelativeHumidity: 'sensor',
         zcl.clusters.measurement.TemperatureMeasurement: 'sensor',
         zcl.clusters.security.IasZone: 'binary_sensor',
